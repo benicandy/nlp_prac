@@ -48,35 +48,62 @@ y = torch.tensor(y_train, device=device, dtype=torch.float)
 
 # (1) ネットワークをインスタンス化し，推論グラフを定義する
 net = Net().to(device)
-print("w: ", net.fc1.weight)  # 初期値
-print("b: ", net.fc1.bias)  # 初期値
+#print("w: ", net.fc1.weight)  # 初期値
+#print("b: ", net.fc1.bias)  # 初期値
 # (2) 損失を生成する操作を定義する
 criterion = nn.MSELoss()
 # (3) 勾配を計算し適用する操作を定義する
 optimizer = optim.SGD(net.parameters(), lr=0.01)
 
 # training
-for i in range(1):
+for i in range(3000):
     # 勾配パラメータを初期化
     optimizer.zero_grad()
     # 順伝播(NN の予測を計算)
     output = net(x)
     # 予測と正解ラベルから損失を計算
     loss = criterion(output, y)
-    print("loss: ", loss)
-    print("dL/dw: ", net.fc1.weight.grad)
-    print("dL/db: ", net.fc1.bias.grad)
+    #print("loss: ", loss)
+    #print("dL/dw: ", net.fc1.weight.grad)
+    #print("dL/db: ", net.fc1.bias.grad)
     # 損失を逆伝播(勾配を計算)
     loss.backward()
-    print("loss.backward()")
-    print("dL/dw: ", net.fc1.weight.grad)
-    print("dL/db: ", net.fc1.bias.grad)
+    #print("loss.backward()")
+    #print("dL/dw: ", net.fc1.weight.grad)
+    #print("dL/db: ", net.fc1.bias.grad)
     # パラメータの更新
     optimizer.step()
-    print("w: ", net.fc1.weight)
-    print("b: ", net.fc1.bias)
+    #print("w: ", net.fc1.weight)
+    #print("b: ", net.fc1.bias)
 
 
 # test
-#outputs = net(torch.tensor(X_test, device=device, dtype=torch.float))
-#_, predicted = torch.max(outputs.data, 1)
+inputs = torch.tensor(X_test, device=device, dtype=torch.float)  # [data, input_dim]
+print("*" * 30)
+print(inputs.data.shape)
+outputs = net(inputs) # [data, output_dim]
+print("*"*30)
+print(outputs.data.shape)
+# data ごとに axis 方向の最大値の index を取得
+_, predicted = torch.max(outputs.data, 1)  # [data]
+print("*" * 30)
+print(predicted.shape)
+# torch.Tensor -> numpy.ndarray
+y_predicted = predicted.numpy()
+# target ごとに axis 方向の最大値の index を取得
+y_test = np.argmax(y_test, axis=1)  # [target]
+
+# accuracy を計算
+accuracy = (int)(100 * np.sum(y_predicted==y_test) / len(y_predicted))
+print("accuracy: {}%".format(accuracy))
+
+
+# utility function to predict for an unknown data
+def predict(X):
+    X = torch.tensor(np.array(X), dtype=torch.float)
+    outputs = net(X)
+    return np.argmax(outputs.data.numpy())
+
+sample_input = np.random.randint(1, 5, (1, 4))
+print(sample_input)
+print(predict(sample_input))
