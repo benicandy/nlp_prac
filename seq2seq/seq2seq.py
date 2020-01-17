@@ -21,8 +21,8 @@ class Encoder(nn.Module):
     ) -> None:
         """
         :param vocab_size: 単語列の長さ
-        :param embedding_dim: 埋め込み次元
-        :param hidden_dim: 隠れ層次元
+        :param embedding_dim: 埋め込み層の次元
+        :param hidden_dim: 隠れ層の次元
         :param batch_size: ミニバッチサイズ
         """
         super(Encoder, self).__init__()
@@ -60,6 +60,12 @@ class Decoder(nn.Module):
         hidden_dim: int,
         batch_size: int = 128
     ) -> None:
+        """
+        :param vocab_size: 単語列の長さ
+        :param embedding_dim: 埋め込み層の次元
+        :param hidden_dim: 隠れ層の次元
+        :param batch_size: ミニバッチサイズ
+        """
         super(Decoder, self).__init__()
         self.hidden_dim = hidden_dim
         self.batch_size = batch_size
@@ -74,12 +80,14 @@ class Decoder(nn.Module):
         state: torch.tensor,
     ) -> torch.tensor:
         """
+        単語列 x_(0) ~ x_(t-1) から単語列 x_(1) ~ x_(t) を予測
+
         input: [batch_size, vocab_size, 1]
         hidden_in: [1, batch_size, hidden_dim]
         embedding_out: [batch_size, vocab_size, embedding_dim]
         gru_hidden_out: [1, batch_size, hidden_dim]
         gru_out: [batch_size, vocab_size, hidden_dim]
-        output: [batch_size]
+        output: [batch_size, vocab_size, vocab_size]
 
         :param indices: torch.tensor
         :param state: torch.tensor
@@ -91,4 +99,6 @@ class Decoder(nn.Module):
         output = self.output(gruout)
 
         return output, state
+
+
 

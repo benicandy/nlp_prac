@@ -8,7 +8,6 @@ cf3. http://aidiary.hatenablog.com/entry/20180129/1517233796
 """
 
 import torch
-from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -20,6 +19,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # network definition
 class Net(nn.Module):
+    """グラフを構築"""
     def __init__(self):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(4, 10)
