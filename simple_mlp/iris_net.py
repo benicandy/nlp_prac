@@ -1,5 +1,5 @@
 """
-シンプルな多層 MLP の Pytorch 実装
+シンプルな MLP の Pytorch 実装
 cf1. https://qiita.com/sudamasahiko/items/b54fed1ffe8bb6d48818
 cf2. https://qiita.com/perrying/items/857df46bb6cdc3047bd8
 cf3. http://aidiary.hatenablog.com/entry/20180129/1517233796
