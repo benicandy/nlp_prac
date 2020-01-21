@@ -7,10 +7,48 @@ import numpy as np
 from datetime import datetime
 from sklearn.utils import shuffle
 
-from .seq2seq import Encoder, Decoder
+import csv
+from gensim.corpora import Dictionary
+
+from seq2seq.seq2seq import Encoder, Decoder
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+corpus = []
+with open('dataset.csv', encoding='utf-8') as fp:
+    reader = csv.reader(fp)
+    for i, row in enumerate(reader):
+        print(row)
+        if i == 0: pass
+        corpus.append(row[0].split(' '))
+        corpus.append(row[1].split(' '))
+dct = Dictionary(corpus)
+word2id = dct.token2id
+print("initialize: ", dct[0])
+
+dct_len = len(word2id)
+word2id.update({"<pad>": dct_len, "<eos>": dct_len+1})
+id2word = {v: k for k, v in word2id.items()}
+
+print(word2id)
+print(id2word)
+
+
+def load_dataset():
+    def load_sent():
+        with open('dataset.csv', encoding='utf-8') as fp:
+            reader = csv.reader(fp)
+            for i, row in enumerate(reader):
+                if i == 0: pass
+
+
+
+    def padding(string, training=True):
+        pass
+
+    def transform(string, seq_len=10):
+        pass
 
 
 def train2batch(data, target, batch_size=128):
@@ -39,9 +77,7 @@ def main():
     vocab_size = len(word2id)
     batch_size = 128
 
-    """
-    計算グラフを定義
-    """
+    # 計算グラフを定義
     # (1) ネットワークをインスタンス化し，推論グラフを定義
     encoder = Encoder(vocab_size, embedding_dim, hidden_dim).to(device)
     decoder = Decoder(vocab_size, embedding_dim, hidden_dim).to(device)
@@ -53,9 +89,7 @@ def main():
     encoder_optimizer = optim.Adam(encoder.parameters(), lr=0.001)
     decoder_optimizer = optim.Adam(decoder.parameters(), lr=0.001)
 
-    """
-    学習フェーズ
-    """
+    # 学習フェーズ
     print("Training...")
     n_epoch = 100
     for epoch in range(1, n_epoch + 1):
@@ -100,3 +134,5 @@ def main():
             print("Saving the checkpoint...")
 
 
+if __name__ == "__main__":
+    pass
