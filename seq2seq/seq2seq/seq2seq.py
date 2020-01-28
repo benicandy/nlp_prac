@@ -3,11 +3,7 @@ seq2seq の Pytorch 実装
 """
 
 import torch
-from torch.autograd import Variable
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import numpy as np
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -17,7 +13,9 @@ class Encoder(nn.Module):
         vocab_size: int,
         embedding_dim: int,
         hidden_dim: int,
+        word2id: dict,
         batch_size: int = 128
+        
     ) -> None:
         """
         :param vocab_size: 単語列の長さ
@@ -58,7 +56,9 @@ class Decoder(nn.Module):
         vocab_size: int,
         embedding_dim: int,
         hidden_dim: int,
+        word2id: dict,
         batch_size: int = 128
+        
     ) -> None:
         """
         :param vocab_size: 単語列の長さ

@@ -13,3 +13,7 @@ from gensim.corpora import Dictionary
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+string = "{:*<7s}".format("a a a")
+print(string.split(' ')[0])
+
+print(type({}))

@@ -1,11 +1,10 @@
 import torch
-from torch.autograd import Variable
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 from datetime import datetime
 from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 
 import csv
 from gensim.corpora import Dictionary
@@ -19,48 +18,88 @@ corpus = []
 with open('dataset.csv', encoding='utf-8') as fp:
     reader = csv.reader(fp)
     for i, row in enumerate(reader):
-        print(row)
         if i == 0: pass
         corpus.append(row[0].split(' '))
         corpus.append(row[1].split(' '))
+N = len(corpus) // 2
 dct = Dictionary(corpus)
 word2id = dct.token2id
-print("initialize: ", dct[0])
-
+initialize = dct[0]
 dct_len = len(word2id)
 word2id.update({"<pad>": dct_len, "<eos>": dct_len+1})
 id2word = {v: k for k, v in word2id.items()}
 
-print(word2id)
-print(id2word)
-
-
+seq_len = 10
 def load_dataset():
-    def load_sent():
+    def load_sent_list(training=True):
+        sent_list = []
         with open('dataset.csv', encoding='utf-8') as fp:
             reader = csv.reader(fp)
             for i, row in enumerate(reader):
                 if i == 0: pass
+                if training:
+                    sent_list.append(row[0].split(' '))
+                else:
+                    sent_list.append(row[1].split(' '))
+        return sent_list
 
 
+    def padding(sent_list, seq_len=seq_len):
+        res = []
+        for i, sent in enumerate(sent_list):
+            if len(sent) > seq_len:
+                res.append(sent[:seq_len])
+            else:
+                for j in range(seq_len - len(sent)):
+                    sent.append("<pad>")
+                res.append(sent)
+        return res
 
-    def padding(string, training=True):
-        pass
 
-    def transform(string, seq_len=10):
-        pass
+    def transform(sent_list):
+        res = []
+        for sent in sent_list:
+            tmp = []
+            for i, word in enumerate(sent):
+                try:
+                    tmp.append(word2id[word])
+                except:
+                    tmp.append(word2id["<pad>"])
+            res.append(tmp)
+        return res
+    
+
+    source = []
+    target = []
+    for _ in range(N):
+        eos = word2id["<eos>"]
+        x = load_sent_list(training=True)
+        y = load_sent_list(training=False)
+        left = padding(x)
+        right = padding(y)
+        source.append(transform(left))
+        right = transform(right)
+        right = [[eos] + right[i][:seq_len-1] for i, _ in enumerate(right)]
+        for i, _ in enumerate(right):
+            right[i][right[i].index(word2id["<pad>"])] = eos
+        target.append(right)
+    
+    return source, target
+
+source, target = load_dataset()
+train_x, test_x, train_t, test_t = train_test_split(source, target, test_size=0.1)
 
 
-def train2batch(data, target, batch_size=128):
+def train2batch(source, target, batch_size=128):
     input_batch = []
     output_batch = []
-    data, target = shuffle(data, target)
+    source, target = shuffle(source, target)
 
-    for i in range(0, len(data), batch_size):
+    for i in range(0, len(source), batch_size):
         input_tmp = []
         output_tmp = []
         for j in range(i, i + batch_size):
-            input_tmp.append(data[j])  # append([vocab_size, idx])
+            input_tmp.append(source[j])  # append([vocab_size, idx])
             output_tmp.append(target[j])  # append([vocab_size, idx])
         input_batch.append(input_tmp)  # append([batch_size, vocab_size, idx])
         output_batch.append(output_tmp)  # append([batch_size, vocab_size, idx])
@@ -75,12 +114,12 @@ def main():
     embedding_dim = 100
     hidden_dim = 128
     vocab_size = len(word2id)
-    batch_size = 128
+    batch_size = 2
 
     # 計算グラフを定義
     # (1) ネットワークをインスタンス化し，推論グラフを定義
-    encoder = Encoder(vocab_size, embedding_dim, hidden_dim).to(device)
-    decoder = Decoder(vocab_size, embedding_dim, hidden_dim).to(device)
+    encoder = Encoder(vocab_size, embedding_dim, hidden_dim, word2id).to(device)
+    decoder = Decoder(vocab_size, embedding_dim, hidden_dim, word2id).to(device)
 
     # (2) 損失を生成するグラフを定義する
     criterion = nn.CrossEntropyLoss(ignore_index=word2id["<pad>"])
@@ -94,14 +133,15 @@ def main():
     n_epoch = 100
     for epoch in range(1, n_epoch + 1):
 
-        input_batch, output_batch = train2batch(train_x, train_t)
-        for i in range(len(input_batch)):
+        input_batch, output_batch = train2batch(train_x, train_t, batch_size=batch_size)
+        for i, _ in enumerate(input_batch):
             # Zero gradients
             encoder_optimizer.zero_grad()
             decoder_optimizer.zero_grad()
             # Prepare tensor
             inputs = torch.tensor(input_batch[i], device=device)  # [batch_size, vocab_size, 1]
             outputs = torch.tensor(output_batch[i], device=device)  # [batch_size, vocab_size, 1]
+            print(inputs.shape)
             # Forward pass through encoder
             encoder_hidden = encoder(inputs)
             # Create source and target
@@ -135,4 +175,4 @@ def main():
 
 
 if __name__ == "__main__":
-    pass
+    main()
