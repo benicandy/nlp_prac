@@ -15,10 +15,10 @@ class Encoder(nn.Module):
         hidden_dim: int,
         word2id: dict,
         batch_size: int = 128
-        
+
     ) -> None:
         """
-        :param vocab_size: 単語列の長さ
+        :param vocab_size: 単語index数
         :param embedding_dim: 埋め込み層の次元
         :param hidden_dim: 隠れ層の次元
         :param batch_size: ミニバッチサイズ
@@ -34,19 +34,18 @@ class Encoder(nn.Module):
         indices: torch.tensor
     ) -> torch.tensor:
         """
-        input: [batch_size, vocab_size, 1]
-        embedding_out: [batch_size, vocab_size, embedding_dim]
-        hidden: [1, batch_size, hidden_dim]
-        gru_hidden_out: [1, batch_size, hidden_dim]
+        input(indices): [batch_size, seq_len]
+        embedding_out: [batch_size, seq_len, embedding_dim]
+        hidden: [num_layers * num_directions, batch_size, hidden_dim]
+        gru_hidden_out(state): [num_layers * num_directions, batch_size, hidden_dim]
 
         :param indices: 単語の index を含んだテンソル
-        Comment: hidden や gru_hidden_out の 1 はレイヤ*方向の値
+        Comment: num_layers * num_directions はレイヤ*方向(一方向か双方向か)の値
         """
         embedding = self.word_embeddings(indices)
         if embedding.dim() == 2:
             embedding = torch.unsqueeze(embedding, 1)
         _, state = self.gru(embedding, torch.zeros(1, self.batch_size, self.hidden_dim, device=device))
-
         return state
 
 
@@ -61,7 +60,7 @@ class Decoder(nn.Module):
         
     ) -> None:
         """
-        :param vocab_size: 単語列の長さ
+        :param vocab_size: 単語index数
         :param embedding_dim: 埋め込み層の次元
         :param hidden_dim: 隠れ層の次元
         :param batch_size: ミニバッチサイズ
@@ -82,12 +81,12 @@ class Decoder(nn.Module):
         """
         単語列 x_(0) ~ x_(t-1) から単語列 x_(1) ~ x_(t) を予測
 
-        input: [batch_size, vocab_size, 1]
-        hidden_in: [1, batch_size, hidden_dim]
-        embedding_out: [batch_size, vocab_size, embedding_dim]
-        gru_hidden_out: [1, batch_size, hidden_dim]
-        gru_out: [batch_size, vocab_size, hidden_dim]
-        output: [batch_size, vocab_size, vocab_size]
+        input: [batch_size, seq_len]
+        hidden_in: [num_layers * num_directions, batch_size, hidden_dim]
+        embedding_out: [batch_size, seq_len, embedding_dim]
+        gru_hidden_out: [num_layers * num_directions, batch_size, hidden_dim]
+        gru_out: [batch_size, seq_len, hidden_dim]
+        output: [batch_size, seq_len, vocab_size]
 
         :param indices: torch.tensor
         :param state: torch.tensor
@@ -95,9 +94,8 @@ class Decoder(nn.Module):
         embedding = self.word_embeddings(indices)
         if embedding.dim() == 2:
             embedding = torch.unsqueeze(embedding, 1)
-        gruout, state = self.gru(embedding, state, device=device)
+        gruout, state = self.gru(embedding, state)
         output = self.output(gruout)
-
         return output, state
 
 

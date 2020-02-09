@@ -1,3 +1,8 @@
+
+"""
+色々試すだけの特に意味のないモジュール
+"""
+
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
@@ -7,13 +12,19 @@ import numpy as np
 from datetime import datetime
 from sklearn.utils import shuffle
 
-import csv
+import csv, re
 from gensim.corpora import Dictionary
 
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+with open("security_blog.txt", encoding="utf-8") as fp:
+    text = fp.read()
+    text = re.sub(r'[-“”’,–!?:;^(^)^[^]', '', text)
+    text = re.sub(r'\n+', ' ', text)
+    text = text.lower()
+    text = text.split('. ')
+    text = [x for x in text if x]
 
-string = "{:*<7s}".format("a a a")
-print(string.split(' ')[0])
-
-print(type({}))
+with open("security_blog.csv", "w", encoding="utf-8", newline="") as fp:
+    writer = csv.writer(fp, delimiter=",")
+    for i in range(len(text)//2):
+        writer.writerow([text[i], text[i+1]])
