@@ -31,7 +31,7 @@ dct_len = len(word2id)
 word2id.update({"<pad>": dct_len, "<eos>": dct_len+1})
 id2word = {v: k for k, v in word2id.items()}
 
-seq_len = 30
+seq_len = 50
 def load_dataset():
     def load_sent_list(training=True):
         sent_list = []
@@ -115,7 +115,7 @@ def main():
     embedding_dim = 100
     hidden_dim = 128
     vocab_size = len(word2id)
-    batch_size = 2
+    batch_size = 9
 
     # 計算グラフを定義
     # (1) ネットワークをインスタンス化し，推論グラフを定義
@@ -131,7 +131,7 @@ def main():
 
     # 学習フェーズ
     print("Training...")
-    n_epoch = 100
+    n_epoch = 1000
     for epoch in range(1, n_epoch + 1):  # n_epoch の回数分だけ
 
         input_batch, output_batch = train2batch(train_x, train_t, batch_size=batch_size)
@@ -172,7 +172,7 @@ def main():
             # サンプル用
             output_sample = tmp.argmax(1).tolist()
         
-        if epoch % 10 == 0:
+        if epoch % 100 == 0:
             print("")
             print(get_current_time(), "epoch %d / loss %.3f" % (epoch, loss.item()))
             print("--> ", end="")
